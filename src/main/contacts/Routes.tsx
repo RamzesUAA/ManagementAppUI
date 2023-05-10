@@ -1,22 +1,17 @@
 import React from "react";
-// import { Routes, Switch } from "react-router-dom";
+import { Routes, Route, useLocation } from "react-router-dom";
 
-// import {
-//   ContactPage,
-//   ContactsPage,
-//   EditContactPage,
-//   NewContactPage,
-//   CheckForDuplicateContactsPage,
-// } from "./";
-// import { AppRoute as Route } from "landdox-ui";
-// import { InvalidRoutePage } from "landdox-shared";
+import { EditContactPage, ContactsPage, ContactPage, NewContactPage } from "./";
 
-// const PageRoutes = () => {
-//   return (
-//     <Routes>
-//       <Route path="" element={<MapPage />} />
-//     </Routes>
-//   );
-// };
+const PageRoutes = () => {
+  return (
+    <Routes>
+      <Route path=":contactId" element={<ContactPage />} />
+      <Route path="new" element={<NewContactPage />} />
+      <Route path="edit/:contactId" element={<EditContactPage />} />
+      <Route path="" element={<ContactsPage />} />
+    </Routes>
+  );
+};
 
-// export default PageRoutes;
+export default PageRoutes;

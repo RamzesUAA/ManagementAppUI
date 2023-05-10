@@ -2,10 +2,11 @@ import React from "react";
 import { Route, Routes } from "react-router-dom";
 import AppLayout from "src/shared/ui/AppLayout";
 import { CalendarPage } from "./calendar";
-import { ContactPage } from "./contacts";
+// import { ContactPage } from "./contacts";
 // import { LocationsPage } from "./locations";
+import { PageRoutes as ContactRoutes } from "./contacts";
 import { PageRoutes as LocationRoutes } from "./locations";
-import { PageRoutes as EntityTypeRoutes } from "./entity-types";
+import { PageRoutes as FormTypeRoutes } from "./entity-types";
 import { PageRoutes as EntityRoutes } from "./entities";
 import { MapPage } from "./map";
 
@@ -15,11 +16,11 @@ const MainApp = () => {
       <AppLayout>
         <Routes>
           <Route path="" element={<MapPage />} />
-          <Route path="contacts/*" element={<ContactPage />} />
+          <Route path="contacts/*" element={<ContactRoutes />} />
           <Route path="maps/*" element={<MapPage />} />
           <Route path="locations/*" element={<LocationRoutes />} />
           <Route path="entity/*" element={<EntityRoutes />} />
-          <Route path="entity-type/*" element={<EntityTypeRoutes />} />
+          <Route path="form-types/*" element={<FormTypeRoutes />} />
           <Route path="calendar/*" element={<CalendarPage />} />
 
           {/*               

@@ -42,7 +42,6 @@ export const geoData = {
         ],
       },
     },
-
     {
       type: "Feature",
       geometry: {

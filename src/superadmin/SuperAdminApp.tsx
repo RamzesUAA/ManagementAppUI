@@ -3,8 +3,9 @@ import { Route, Routes } from "react-router-dom";
 import AppLayout from "src/shared/ui/AppLayout";
 import { CalendarPage } from "./calendar";
 import { DashboardPage } from "./dashboard";
-import { ProfilePage } from "./profile";
+import { AccountPage } from "./account";
 import { TeamPage } from "./team";
+import { RolePage } from "./roles";
 
 // 1. People
 // 2. Organizations
@@ -17,7 +18,8 @@ const SuperAdminApp = () => {
           <Route path="" element={<TeamPage />} />
           <Route path="calendar" element={<CalendarPage />} />
           <Route path="contacts" element={<TeamPage />} />
-          <Route path="profile" element={<ProfilePage />} />
+          <Route path="account" element={<AccountPage />} />
+          <Route path="role" element={<RolePage />} />
 
           {/* <Route path="" element={<DashboardPage />} /> */}
           {/* <Route path="contacts" element={<ContactPage />} />

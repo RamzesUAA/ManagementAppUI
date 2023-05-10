@@ -14,38 +14,156 @@ import {
 } from "@mui/material";
 import Select, { SelectChangeEvent } from "@mui/material/Select";
 import { Formik, Form, Field, useFormikContext } from "formik";
-import React, { useCallback, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import Button from "src/shared/ui/Button";
 import Header from "src/shared/ui/components/Header";
 import _ from "lodash";
 import { v4 as uuid } from "uuid";
-import { entityType } from "../../../../data/entities";
+import { formType as formTypeMock } from "../../../../data/entities";
 
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import { tokens } from "src/shared/global/theme";
+import { useNavigate, useParams } from "react-router-dom";
+import useApi from "src/shared/agent";
+import usePagination from "@mui/material/usePagination/usePagination";
+import { DATA_GRID_PROPS_DEFAULT_VALUES } from "@mui/x-data-grid";
+import * as Yup from "yup";
 
-type FieldType = {
-  id: string;
-  type: string;
-  label: string;
-  name: string;
-  options?: string;
-};
+const CreateLocationSchema = Yup.object().shape({
+  label: Yup.string().required("Name is required"),
+  address: Yup.string().required("Address is required"),
+  type: Yup.string(),
+  test_url_form: Yup.string()
+    .required("Url is required")
+    .url("Invalid URL format"),
+  positiveInteger: Yup.number()
+    .integer()
+    .min(0, "Value must be a positive integer"),
+  integer: Yup.number().integer("Value must be an integer"),
+  date: Yup.date().nullable(),
+});
 
 const NewEntityPage = () => {
-  const handleFormSubmit = (values: any) => {
-    console.log("SUBMITTT");
-    console.log(values);
-    console.log("SUBMITTT");
+  let navigate = useNavigate();
+  let { entityId } = useParams();
+
+  const { get, post } = useApi();
+
+  const [formType, setFormType] = useState<FormType | null>(null);
+
+  useEffect(() => {
+    get(`/form_types/${entityId}`).then((res: any) => {
+      const names = _.map(
+        res?.data?.data?.fields?.schema || [],
+        (f) => f?.name
+      );
+      const object = names.reduce((obj: any, key: any) => {
+        obj[key] = "";
+        return obj;
+      }, {});
+
+      setFormType({
+        id: "",
+        name: "",
+        label: "",
+        fields: res?.data?.data?.fields,
+        ...object,
+      });
+    });
+  }, []);
+
+  const validationSchema = useMemo(() => {
+    return Yup.object().shape(
+      _.reduce(
+        formType?.fields?.schema || [],
+        (schema: any, field: any) => {
+          switch (field.type) {
+            case "input":
+              schema[field.name] = Yup.string().required(
+                `${field.label} is required`
+              );
+              break;
+            case "integer":
+              schema[field.name] = Yup.number()
+                .integer()
+                .required(`${field.label} is required`);
+              break;
+            case "drop-down":
+              schema[field.name] = Yup.string().required(
+                `${field.label} is required`
+              );
+              break;
+            case "url":
+              schema[field.name] = Yup.string()
+                .url("Invalid URL format")
+                .required(`${field.label} is required`);
+              break;
+            case "positive-integer":
+              schema[field.name] = Yup.number()
+                .integer()
+                .min(0, `${field.label} must be a positive integer`)
+                .required(`${field.label} is required`);
+              break;
+            case "date":
+              schema[field.name] = Yup.date()
+                .nullable()
+                .required(`${field.label} is required`);
+              break;
+            default:
+              break;
+          }
+          return schema;
+        },
+        { label: Yup.string().required("Name is required") }
+      )
+    );
+  }, [formType]);
+
+  const getFieldsWithIDs = (data: any) => {
+    const schema = data.fields.schema;
+    return _.map(schema, (field) => {
+      const name = field.name;
+      const schemaId = field.id;
+      const value = data[name];
+      return {
+        id: uuid(),
+        field_id: schemaId,
+        value: value,
+      };
+    });
   };
 
+  const handleFormSubmit = (values: any) => {
+    console.log("VVVVVVVVVVVV");
+    console.log("VVVVVVVVVVVV");
+    // post("/forms", values).then((res: any) => {}):
+
+    const requestData = {
+      id: uuid(),
+      name: values?.label,
+      form_type_id: entityId,
+      data: { records: getFieldsWithIDs(values) },
+    };
+
+    console.log("REQUEST DATA");
+    console.log("REQUEST DATA");
+    console.log(requestData);
+    post("/forms", { form: requestData }).then((res: any) => {
+      navigate("/entity/" + entityId);
+    });
+  };
+
+  if (formType === null) return null;
   return (
     <Box m="20px">
       <Header title="New Entity" subtitle="Create New Location Page" />
-
-      <Formik onSubmit={handleFormSubmit} initialValues={entityType}>
+      <Formik
+        initialValues={formType}
+        onSubmit={handleFormSubmit}
+        validationSchema={validationSchema}
+      >
         {(props) => (
           <>
             <Box display="grid" gap="30px">
@@ -63,8 +181,9 @@ const NewEntityPage = () => {
                   width="300px"
                 >
                   <Button type="submit" label="Create" />
-                  <Button label="Cancel" url="/entity" />
+                  <Button label="Cancel" url={`/entity/${entityId}`} />
                 </Box>
+
                 <TextField
                   fullWidth
                   variant="filled"
@@ -72,23 +191,23 @@ const NewEntityPage = () => {
                   label="Form Name"
                   onBlur={props.handleBlur}
                   onChange={props.handleChange}
-                  value={props.values.entityTypeLabel}
-                  name="entityTypeLabel"
-                  // error={!!touched.firstName && !!errors.firstName}
-                  helperText={
-                    props.touched.entityTypeLabel &&
-                    props.errors.entityTypeLabel
-                  }
+                  value={props.values.label}
+                  name="label"
+                  error={props.touched.label && Boolean(props.errors.label)}
+                  helperText={props.touched.label && props.errors.label}
                   sx={{ gridColumn: "span 2" }}
                 />
+
                 <Card sx={{ padding: "10px", margin: "20px 0px 20px 0px" }}>
-                  {(props.values?.fields ?? []).map((field, index) => (
-                    <FormFieldWithWrapper
-                      key={field.id}
-                      field={field}
-                      {...props}
-                    />
-                  ))}
+                  {(props?.values?.fields?.schema ?? []).map((field, index) => {
+                    return (
+                      <FormFieldWithWrapper
+                        key={field.id}
+                        field={field}
+                        {...props}
+                      />
+                    );
+                  })}
                 </Card>
               </Form>
             </Box>
@@ -103,12 +222,18 @@ const FormField = ({
   type,
   field,
   value,
+  error,
+  values,
   errors,
   touched,
+  getFieldProps,
   handleBlur,
   handleChange,
   setFieldValue,
 }: any) => {
+  const fieldError = errors[field.name];
+  const fieldTouched = touched[field.name];
+
   switch (field.type) {
     case "input":
     case "integer":
@@ -122,8 +247,10 @@ const FormField = ({
           label={field.label}
           onBlur={handleBlur}
           onChange={handleChange}
-          value={value}
+          value={values[field.value]}
           name={field.name}
+          error={fieldTouched && Boolean(fieldError)}
+          helperText={fieldTouched && fieldError}
           sx={{ gridColumn: "span 2" }}
         />
       );
@@ -131,44 +258,71 @@ const FormField = ({
       return (
         <LocalizationProvider dateAdapter={AdapterDayjs}>
           <DatePicker
-            onChange={(value: any) => setFieldValue("date", value, true)}
-            value={field.value} // Pass field.value instead of value
+            onChange={(value) => {
+              setFieldValue(field.name, value);
+            }}
+            value={getFieldProps(field.name)?.value}
             renderInput={(params: any) => (
-              <TextField
-                label="Date"
-                margin="normal"
-                name="date"
-                variant="standard"
-                fullWidth
-                value={field.value} // Pass field.value instead of value
-                {...params}
-              />
+              <>
+                <FormControl fullWidth sx={{ gridColumn: "span 2" }}>
+                  <TextField
+                    {...params}
+                    name={field.name}
+                    fullWidth
+                    variant="filled"
+                    type="text"
+                    sx={{ gridColumn: "span 2" }}
+                    margin="normal"
+                    error={fieldTouched && Boolean(fieldError)}
+                    helperText={fieldTouched && fieldError}
+                    label={field.label}
+                  />
+                </FormControl>
+              </>
             )}
           />
         </LocalizationProvider>
       );
     case "drop-down":
+      console.log("DROP DOWN: ");
+      console.log("DROP DOWN: ");
+      console.log(values);
+      console.log(field);
+      console.log(values[field.value]);
+      console.log("DROP DOWN: ");
+      console.log("DROP DOWN: ");
       return (
         <FormControl fullWidth sx={{ gridColumn: "span 2" }}>
-          <InputLabel id="demo-simple-select-label">Age</InputLabel>
+          <InputLabel id="demo-simple-select-label">{field.label}</InputLabel>
           <Select
-            labelId="demo-simple-select-label"
-            id="demo-simple-select"
-            value={field.age}
-            label="Age"
-            name="age"
+            value={values[field.name] || ""}
+            label={field.label}
+            name={field.name}
             onBlur={handleBlur}
-            onChange={handleChange}
+            onChange={(value) => {
+              setFieldValue(field.name, value?.target?.value);
+            }}
+            error={fieldTouched && Boolean(fieldError)}
+            // helperText={fieldTouched && fieldError}
           >
-            <MenuItem value={10}>Ten</MenuItem>
-            <MenuItem value={20}>Twenty</MenuItem>
-            <MenuItem value={30}>Thirty</MenuItem>
+            <MenuItem value=""> </MenuItem>
+            {_.map(parseOptionsString(field?.options) || [], (option) => {
+              return <MenuItem value={option}>{option}</MenuItem>;
+            })}
           </Select>
         </FormControl>
       );
   }
 
   return null;
+};
+
+const parseOptionsString = (optionsString: string, separator: string = ";") => {
+  optionsString = optionsString.replace(/;+$/, "");
+
+  return _.map(optionsString.split(separator), (option) => {
+    return option;
+  });
 };
 
 const withWrapperFormField = (Component: React.FC) => (props: any) => {

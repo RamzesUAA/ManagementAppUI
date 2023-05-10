@@ -1,28 +1,32 @@
 // @ts-nocheck
 
-import React from "react";
-import { Box } from "@mui/material";
-import {
-  MapContainer,
-  Marker,
-  Popup,
-  TileLayer,
-  FeatureGroup,
-  Circle,
-  GeoJSON,
-  useMap,
-} from "react-leaflet";
-import { EditControl } from "react-leaflet-draw";
+import React, { useState, useRef, useEffect } from "react";
+import { Box, Button as MuiButton } from "@mui/material";
+import { MapContainer, TileLayer, FeatureGroup, GeoJSON } from "react-leaflet";
 import * as L from "leaflet";
 import { renderToStaticMarkup } from "react-dom/server";
-import { Link } from "react-router-dom";
 import Header from "src/shared/ui/components/Header";
-import { geoData } from "../../../../data/geoJson";
+import _ from "lodash";
+import useApi from "src/shared/agent";
 
 const MapPage = () => {
-  const onCreate = (e: any) => {
-    // Here we will safe data
-  };
+  const [location, setLocation] = useState<LocationType | null>(null);
+
+  const { get } = useApi();
+
+  useEffect(() => {
+    get("/locations").then((res) => {
+      const features = _.chain(res.data.data)
+        .map((location) => {
+          return location.location.features ?? [];
+        })
+        .flatten()
+        .value();
+      console.log(features);
+
+      setLocation({ type: "FeatureCollection", features: features });
+    });
+  }, []);
 
   const onEachCountry = (feature: any, layer: any) => {
     layer.on({
@@ -32,14 +36,15 @@ const MapPage = () => {
         const reactElement = (
           <>
             <div className="disabled">
-              <a href="calendar">{feature?.properties?.name}</a>
+              <a href={`/locations/${feature?.properties?.id}`}>
+                {feature?.properties?.name}
+              </a>
             </div>
             <div className="d-flex">
               <i>Type: {feature?.properties?.type}</i>
             </div>
           </>
         );
-
         const output = document.createElement("div");
         const staticElement = renderToStaticMarkup(reactElement);
         output.innerHTML = staticElement;
@@ -60,36 +65,28 @@ const MapPage = () => {
   return (
     <Box m="20px">
       <Header title="MAP" subtitle="Interactive Map Page" />
+      {location && (
+        <Box height="80%">
+          <MapContainer
+            center={[45.2595092, -104.5204334]}
+            zoom={3}
+            style={{ height: "75vh" }}
+          >
+            <FeatureGroup>
+              <GeoJSON
+                key={location?.id}
+                onEachFeature={onEachCountry}
+                data={location}
+              ></GeoJSON>
 
-      <Box height="80%">
-        <MapContainer
-          center={[45.2595092, -104.5204334]}
-          zoom={3}
-          style={{ height: "75vh" }}
-        >
-          <FeatureGroup>
-            <EditControl
-              position="topright"
-              onCreated={onCreate}
-              draw={{
-                rectangle: false,
-                circle: false,
-                circlemarker: false,
-              }}
-            />
-          </FeatureGroup>
-
-          <GeoJSON
-            onEachFeature={onEachCountry}
-            data={geoData?.features}
-          ></GeoJSON>
-
-          <TileLayer
-            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-          />
-        </MapContainer>
-      </Box>
+              <TileLayer
+                attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+              />
+            </FeatureGroup>
+          </MapContainer>
+        </Box>
+      )}
     </Box>
   );
 };

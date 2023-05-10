@@ -24,6 +24,9 @@ import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import { tokens } from "src/shared/global/theme";
+import useApi from "src/shared/agent";
+import { useAppState } from "src/shared/global/appState";
+import { useNavigate } from "react-router-dom";
 
 const availableFormType = [
   "input",
@@ -43,23 +46,60 @@ type FieldType = {
 };
 
 type FormValuesType = {
-  entityTypeLabel: string;
+  formTypeLabel: string;
   fields: FieldType[];
 };
 const initialValues = {
-  entityTypeLabel: "",
+  formTypeLabel: "",
   fields: [],
 };
 
-const NewEntityTypePage = () => {
+const parseOptionsString = (optionsString: string, separator: string = ";") => {
+  // trim any trailing semicolons
+  optionsString = optionsString.replace(/;+$/, "");
+
+  return _.map(optionsString.split(separator), (option) => {
+    return option;
+  });
+};
+
+const NewFormTypePage = () => {
+  const { post } = useApi();
+  const { setCustomFormTypes } = useAppState();
+
   const [open, setOpen] = useState(false);
   const handleOpen = () => setOpen(true);
   const handleClose = () => setOpen(false);
+  // navigate to form-types page
+
+  let navigate = useNavigate();
 
   const handleFormSubmit = (values: any) => {
     console.log("SUBMITTT");
     console.log(values);
     console.log("SUBMITTT");
+
+    // const dropdownFields = _.filter(values.fields, { type: "drop-down" });
+    // _.forEach(dropdownFields, (field) => {
+    //   const options = parseOptionsString(field.options);
+    //   field.options = options;
+    // });
+
+    // console.log("SUBMITTT");
+    // console.log(values);
+    // console.log("SUBMITTT");
+
+    const formType = {
+      label: values.formTypeLabel,
+      fields: { schema: values.fields },
+      name: values.formTypeLabel.replace(/\s/g, "_").toLowerCase(),
+    };
+
+    post("/form_types", { form_type: formType }).then((res) => {
+      setCustomFormTypes((prev: any) => [...prev, res.data.data]);
+      navigate("/form-types");
+      // navigate to form-types page
+    });
   };
 
   const handleAddNewItem = useCallback(
@@ -107,7 +147,7 @@ const NewEntityTypePage = () => {
                 width="300px"
               >
                 <Button type="submit" label="Create" />
-                <Button label="Cancel" url="/entity-type" />
+                <Button label="Cancel" url="/form-types" />
               </Box>
               <TextField
                 fullWidth
@@ -116,11 +156,11 @@ const NewEntityTypePage = () => {
                 label="Form Name"
                 onBlur={props.handleBlur}
                 onChange={props.handleChange}
-                value={props.values.entityTypeLabel}
-                name="entityTypeLabel"
+                value={props.values.formTypeLabel}
+                name="formTypeLabel"
                 // error={!!touched.firstName && !!errors.firstName}
                 helperText={
-                  props.touched.entityTypeLabel && props.errors.entityTypeLabel
+                  props.touched.formTypeLabel && props.errors.formTypeLabel
                 }
                 sx={{ gridColumn: "span 2" }}
               />
@@ -204,7 +244,7 @@ const FormFieldByType = ({ values, onDelete }: any) => {
             minWidth: "140px",
           }}
         >
-          Name: {values?.name}
+          Name: {values?.label.replace(/\s/g, "_").toLowerCase()}
         </span>
 
         {values?.options && (
@@ -272,8 +312,6 @@ const getFormFieldByType = ({
             value={values.date}
             renderInput={(params: any) => (
               <TextField
-                // error={Boolean(touched.birthday && errors.birthday)}
-                // helperText={touched.birthday && errors.birthday}
                 label="Date"
                 margin="normal"
                 name="date"
@@ -307,7 +345,7 @@ const getFormFieldByType = ({
   }
 };
 
-export default NewEntityTypePage;
+export default NewFormTypePage;
 
 const style = {
   position: "absolute" as "absolute",
@@ -340,7 +378,8 @@ const BasicModal = ({ handleClose, open, addField }: any) => {
     console.log("#############");
     addField({
       ...values,
-      name: _(values?.label).lowerCase().trim(),
+      // make sure name is lowercase and replace spaces with underscore
+      name: values.label.replace(/\s/g, "_").toLowerCase(),
     });
     handleClose();
   };

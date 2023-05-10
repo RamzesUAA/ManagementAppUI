@@ -55,8 +55,8 @@ const Menu = ({ show, menuRef }: MenuType) => {
       <List>
         {_.map(
           isSuperAdmin ? superAdminDropdownItems : userDropdownItems,
-          (menuItem) => (
-            <ListItem disablePadding>
+          (menuItem, idx) => (
+            <ListItem disablePadding key={idx}>
               <ListItem button component={Link} to={menuItem?.url}>
                 <ListItemText primary={menuItem?.title} />
               </ListItem>

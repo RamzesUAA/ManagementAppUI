@@ -1,66 +1,51 @@
 import { Box, Typography, useTheme } from "@mui/material";
-import React from "react";
-import { DataGrid, GridToolbar } from "@mui/x-data-grid";
+import React, { useEffect, useState } from "react";
+import { DataGrid, GridColumns, GridToolbar } from "@mui/x-data-grid";
 import { tokens } from "src/shared/global/theme";
-import { mockDataContacts } from "src/data/mockData";
-import AdminPanelSettingsOutlinedIcon from "@mui/icons-material/AdminPanelSettingsOutlined";
-import LockOpenOutlinedIcon from "@mui/icons-material/LockOpenOutlined";
-import SecurityOutlinedIcon from "@mui/icons-material/SecurityOutlined";
 import Header from "src/shared/ui/components/Header";
+import { Link } from "react-router-dom";
+import Button from "src/shared/ui/Button";
+import useApi from "src/shared/agent";
+import { useAppState } from "src/shared/global/appState";
 
-const ContactPage = () => {
-  const theme = useTheme();
-  const colors = tokens(theme.palette.mode);
-
-  const columns = [
-    { field: "id", headerName: "ID", flex: 0.5 },
-    { field: "registrarId", headerName: "Registrar ID" },
+const FormTypesPage = () => {
+  const columns: GridColumns<FormType> | undefined = [
     {
       field: "name",
       headerName: "Name",
       flex: 1,
-      cellClassName: "name-column--cell",
-    },
-    {
-      field: "age",
-      headerName: "Age",
-      type: "number",
-      headerAlign: "left",
-      align: "left",
-    },
-    {
-      field: "phone",
-      headerName: "Phone Number",
-      flex: 1,
-    },
-    {
-      field: "email",
-      headerName: "Email",
-      flex: 1,
-    },
-    {
-      field: "address",
-      headerName: "Address",
-      flex: 1,
-    },
-    {
-      field: "city",
-      headerName: "City",
-      flex: 1,
-    },
-    {
-      field: "zipCode",
-      headerName: "Zip Code",
-      flex: 1,
+      renderCell: (params) => (
+        <Typography
+          color={colors.greenAccent[500]}
+          component={Link}
+          to={`${params?.row?.id}`}
+        >
+          {params?.row?.label}
+        </Typography>
+      ),
     },
   ];
 
+  const { get } = useApi();
+
+  const theme = useTheme();
+  const colors = tokens(theme.palette.mode);
+
+  const [formTypes, setFormTypes] = useState<FormType[]>([]);
+  const { customFormTypes } = useAppState();
+
+  // useEffect(() => {
+  //   get("/form_types").then((res) => {
+  //     setFormTypes(res.data.data);
+  //   });
+  // }, []);
+
   return (
     <Box m="20px">
-      <Header
-        title="CONTACTS"
-        subtitle="List of Contacts for Future Reference"
-      />
+      <Header title="FORM TYPES" subtitle="Form Types Page" />
+      <Box>
+        <Button label="New" url="new"></Button>
+      </Box>
       <Box
         m="40px 0 0 0"
         height="75vh"
@@ -94,7 +79,7 @@ const ContactPage = () => {
         }}
       >
         <DataGrid
-          rows={mockDataContacts}
+          rows={customFormTypes}
           columns={columns}
           components={{ Toolbar: GridToolbar }}
         />
@@ -103,4 +88,4 @@ const ContactPage = () => {
   );
 };
 
-export default ContactPage;
+export default FormTypesPage;

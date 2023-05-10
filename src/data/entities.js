@@ -1,5 +1,5 @@
-export const entityType = {
-  entityTypeLabel: "Hello",
+export const formType = {
+  formTypeLabel: "Hello",
   fields: [
     {
       type: "input",

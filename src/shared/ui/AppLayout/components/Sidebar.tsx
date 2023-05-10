@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { ProSidebar, Menu, MenuItem } from "react-pro-sidebar";
 import { Box, IconButton, Typography, useTheme } from "@mui/material";
 import { Link, useLocation } from "react-router-dom";
@@ -12,6 +12,7 @@ import PersonOutlinedIcon from "@mui/icons-material/PersonOutlined";
 import CalendarTodayOutlinedIcon from "@mui/icons-material/CalendarTodayOutlined";
 import SettingsOutlined from "@mui/icons-material/SettingsOutlined";
 import PersonOffOutlined from "@mui/icons-material/PersonOffOutlined";
+import LockOutlined from "@mui/icons-material/LockOutlined";
 import BarChartOutlinedIcon from "@mui/icons-material/BarChartOutlined";
 import PieChartOutlineOutlinedIcon from "@mui/icons-material/PieChartOutlineOutlined";
 import TimelineOutlinedIcon from "@mui/icons-material/TimelineOutlined";
@@ -20,6 +21,8 @@ import MenuOutlinedIcon from "@mui/icons-material/MenuOutlined";
 import MapOutlinedIcon from "@mui/icons-material/MapOutlined";
 import _ from "lodash";
 import { entities } from "../../../../data/entities";
+import { useAppState } from "src/shared/global/appState";
+import useApi from "src/shared/agent";
 
 type ItemProps = {
   title: string;
@@ -82,9 +85,14 @@ const superAdminMenuItems = [
     icon: <PeopleOutlinedIcon />,
   },
   {
-    title: "Profile",
-    link: "profile",
+    title: "Account",
+    link: "account",
     icon: <PersonOffOutlined />,
+  },
+  {
+    title: "Role",
+    link: "role",
+    icon: <LockOutlined />,
   },
 ];
 
@@ -119,6 +127,17 @@ const MenuItems = ({
   colors,
   isSuperAdmin,
 }: any) => {
+  const { get } = useApi();
+
+  const [formTypes, setFormTypes] = useState<FormType[]>([]);
+  const { customFormTypes, setCustomFormTypes } = useAppState();
+
+  useEffect(() => {
+    get("/form_types").then((res) => {
+      setCustomFormTypes(res.data.data);
+    });
+  }, []);
+
   return (
     <Box paddingLeft={isCollapsed ? undefined : "10%"}>
       {_.map(
@@ -144,11 +163,11 @@ const MenuItems = ({
           >
             Custom Entities
           </Typography>
-          {_.map(entities, (menuItem, index) => (
+          {_.map(customFormTypes, (menuItem, index) => (
             <Item
               key={index}
-              title={menuItem.title}
-              to={`/entity/${menuItem.name}`}
+              title={menuItem.label}
+              to={`/entity/${menuItem.id}`}
               icon={<LabelOutlined />}
               selected={selected}
               setSelected={setSelected}
@@ -162,8 +181,8 @@ const MenuItems = ({
             Settings
           </Typography>
           <Item
-            title="Entity"
-            to="entity-type"
+            title="Entity Types"
+            to="form-types"
             icon={<SettingsOutlined />}
             selected={selected}
             setSelected={setSelected}
@@ -331,10 +350,10 @@ const Sidebar: React.FC<SidebarProps> = ({ isSidebar }) => {
                   fontWeight="bold"
                   sx={{ m: "4px 0 0 0" }}
                 >
-                  Ed Roh
+                  Roman Alberda
                 </Typography>
                 <Typography variant="h5" color={colors.greenAccent[500]}>
-                  VP Fancy Admin
+                  Manager
                 </Typography>
               </Box>
             </Box>
