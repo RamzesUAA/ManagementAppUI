@@ -18,9 +18,10 @@ import NotificationsOutlinedIcon from "@mui/icons-material/NotificationsOutlined
 import SettingsOutlinedIcon from "@mui/icons-material/SettingsOutlined";
 import PersonOutlinedIcon from "@mui/icons-material/PersonOutlined";
 import SearchIcon from "@mui/icons-material/Search";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useDropdownHandler } from "../hooks/useDropdownHandler";
 import _ from "lodash";
+import useApi from "src/shared/agent";
 
 type MenuType = {
   show: boolean | null;
@@ -41,6 +42,17 @@ const Menu = ({ show, menuRef }: MenuType) => {
   const colors = tokens(theme.palette.mode);
   const { pathname } = useLocation();
   const isSuperAdmin = pathname?.includes("superadmin");
+  const navigate = useNavigate();
+  const { logout } = useApi();
+
+  const handleLogOut = () => {
+    logout().then((d) => {
+      if (d?.status == 200) {
+        navigate("/login");
+      }
+    });
+  };
+
   return (
     <Box
       ref={menuRef}
@@ -64,7 +76,7 @@ const Menu = ({ show, menuRef }: MenuType) => {
           )
         )}
 
-        <ListItem disablePadding>
+        <ListItem button disablePadding onClick={handleLogOut}>
           <ListItemButton>
             <ListItemText primary="Logout" />
           </ListItemButton>

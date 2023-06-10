@@ -15,6 +15,11 @@ import {
   useTheme,
   Divider,
 } from "@mui/material";
+
+import { makeStyles } from "@material-ui/core/styles";
+import FormHelperText from "@material-ui/core/FormHelperText";
+import Select from "@material-ui/core/Select";
+
 import { Formik, Form } from "formik";
 import * as Yup from "yup";
 import Header from "src/shared/ui/components/Header";
@@ -80,10 +85,9 @@ const NewContactPage = () => {
 
     try {
       const response = await post("/workers", requstData);
-      console.log(response.status);
       if (response.status === 201) {
-        // resetForm();
-        // navigate(`/workers/${response.data?.data?.id}`);
+        resetForm();
+        navigate(`/contacts/${response.data?.data?.id}`);
       }
     } catch (error) {}
   };

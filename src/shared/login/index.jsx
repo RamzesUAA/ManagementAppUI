@@ -108,7 +108,7 @@ const LoginPage = () => {
                     fullWidth
                     name="hash_password"
                     label="Password"
-                    type="hash_password"
+                    type="password"
                     id="hash_password"
                     autoComplete="current-hash_password"
                     value={formik.values.hash_password}

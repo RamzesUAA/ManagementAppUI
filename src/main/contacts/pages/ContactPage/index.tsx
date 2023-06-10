@@ -1,6 +1,7 @@
-import { Typography, Button as MuiButton } from "@mui/material";
-import React, { useState, useEffect, useRef } from "react";
-import { useLoaderData, useParams } from "react-router-dom";
+import { Typography } from "@mui/material";
+import Button from "src/shared/ui/Button";
+import React, { useState, useEffect, useCallback } from "react";
+import { useLoaderData, useNavigate, useParams } from "react-router-dom";
 import Header from "src/shared/ui/components/Header";
 import useApi from "src/shared/agent";
 import { utilities } from "src/shared";
@@ -20,7 +21,7 @@ import {
   Accordion,
   AccordionSummary,
   Box,
-  Button,
+  Button as MuiButton,
   Checkbox,
   FormControlLabel,
   TextField,
@@ -33,6 +34,7 @@ import { tokens } from "src/shared/global/theme";
 import { renderToStaticMarkup } from "react-dom/server";
 import { Link } from "react-router-dom";
 import _ from "lodash";
+import { VariantType, useSnackbar } from "notistack";
 
 const ZoomToFeature = ({ coordinates }: any) => {
   const map = useMap();
@@ -84,7 +86,9 @@ const ContactPage = () => {
 
   const [worker, setWorker] = useState<_WorkerType | null>(null);
   const { contactId } = useParams();
-  const { get } = useApi();
+  const { get, del } = useApi();
+  let navigate = useNavigate();
+  const { enqueueSnackbar } = useSnackbar();
 
   useEffect(() => {
     get(`/workers/${contactId}`)
@@ -96,12 +100,57 @@ const ContactPage = () => {
       });
   }, []);
 
+  const handleDelete = useCallback(() => {
+    del(`/workers/${contactId}`).then((res: any) => {
+      enqueueSnackbar(`${worker?.name} is deleted.`, {
+        variant: "info",
+        anchorOrigin: { horizontal: "right", vertical: "top" },
+      });
+
+      navigate("/contacts");
+    });
+  }, [contactId, worker]);
+
+  const handleEdit = useCallback(() => {
+    navigate(`/contacts/edit/${contactId}`);
+  }, [contactId]);
+
   return (
     <Box m="20px">
       <Header title="WORKER" subtitle="View Worker Page" />
       <Typography variant="h3" component="h2" marginBottom="15px">
         {worker?.name} - {utilities.generateIdSlug(worker?.id)}
       </Typography>
+
+      <Box
+        marginBottom="10px"
+        display="flex"
+        justifyContent="space-between"
+        alignItems="center"
+        width="300px"
+      >
+        <div style={{ marginRight: "50px" }}>
+          <Button label="Back" url="/contacts" />
+        </div>
+
+        <Button
+          styles={{
+            backgroundColor: colors.redAccent[500],
+            marginRight: "10px",
+          }}
+          onClick={handleDelete}
+        >
+          Delete
+        </Button>
+
+        <Button
+          styles={{ backgroundColor: colors.blueAccent[500] }}
+          onClick={handleEdit}
+        >
+          Edit
+        </Button>
+      </Box>
+
       <Typography variant="h6" component="h2" marginBottom="15px">
         Position: {worker?.position}
       </Typography>

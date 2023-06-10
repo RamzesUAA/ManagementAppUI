@@ -19,7 +19,6 @@ import Button from "src/shared/ui/Button";
 import Header from "src/shared/ui/components/Header";
 import _ from "lodash";
 import { v4 as uuid } from "uuid";
-import { formType as formTypeMock } from "../../../../data/entities";
 
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
@@ -30,6 +29,7 @@ import useApi from "src/shared/agent";
 import usePagination from "@mui/material/usePagination/usePagination";
 import { DATA_GRID_PROPS_DEFAULT_VALUES } from "@mui/x-data-grid";
 import * as Yup from "yup";
+import { VariantType, useSnackbar } from "notistack";
 
 const CreateLocationSchema = Yup.object().shape({
   label: Yup.string().required("Name is required"),
@@ -50,11 +50,19 @@ const NewEntityPage = () => {
   let { entityId } = useParams();
 
   const { get, post } = useApi();
-
+  const theme = useTheme();
+  const colors = tokens(theme.palette.mode);
   const [formType, setFormType] = useState<FormType | null>(null);
+  const [locations, setLocations] = useState<LocationType[]>([]);
+  const [selectedLocations, setSelectedLocations] = useState<any>([]);
+  const { enqueueSnackbar } = useSnackbar();
 
   useEffect(() => {
     get(`/form_types/${entityId}`).then((res: any) => {
+      get("/locations").then((locationsRes) => {
+        setLocations(locationsRes.data.data);
+      });
+
       const names = _.map(
         res?.data?.data?.fields?.schema || [],
         (f) => f?.name
@@ -136,21 +144,20 @@ const NewEntityPage = () => {
   };
 
   const handleFormSubmit = (values: any) => {
-    console.log("VVVVVVVVVVVV");
-    console.log("VVVVVVVVVVVV");
-    // post("/forms", values).then((res: any) => {}):
-
     const requestData = {
       id: uuid(),
       name: values?.label,
       form_type_id: entityId,
+      locations: _.map(selectedLocations, (l) => l?.location?.id),
       data: { records: getFieldsWithIDs(values) },
     };
 
-    console.log("REQUEST DATA");
-    console.log("REQUEST DATA");
-    console.log(requestData);
     post("/forms", { form: requestData }).then((res: any) => {
+      enqueueSnackbar(`${requestData?.name} is successfully created.`, {
+        variant: "success",
+        anchorOrigin: { horizontal: "right", vertical: "top" },
+      });
+
       navigate("/entity/" + entityId);
     });
   };
@@ -158,7 +165,7 @@ const NewEntityPage = () => {
   if (formType === null) return null;
   return (
     <Box m="20px">
-      <Header title="New Entity" subtitle="Create New Location Page" />
+      <Header title="New Entity" subtitle="Create New Entity Page" />
       <Formik
         initialValues={formType}
         onSubmit={handleFormSubmit}
@@ -209,6 +216,100 @@ const NewEntityPage = () => {
                     );
                   })}
                 </Card>
+
+                <Card sx={{ padding: "10px", margin: "20px 0px 20px 0px" }}>
+                  <Typography variant="h6">
+                    Select locations to link:
+                  </Typography>
+                  {_.map(
+                    _.orderBy(selectedLocations, (l) => l?.order),
+                    (s, index) => {
+                      return (
+                        <FormControl
+                          fullWidth
+                          sx={{ gridColumn: "span 2", marginY: "5px" }}
+                        >
+                          <Select
+                            value={s?.location?.id}
+                            onChange={(e) => {
+                              const locationId = e?.target.value;
+                              if (_(locationId).isEmpty()) {
+                                const filteredLocations = _.filter(
+                                  selectedLocations,
+                                  (l) => l.id !== s?.id
+                                );
+
+                                const reorderedLocations = _.map(
+                                  _.orderBy(filteredLocations, (l) => l.order),
+                                  (f, index) => {
+                                    return {
+                                      ...f,
+                                      order: index,
+                                    };
+                                  }
+                                );
+
+                                setSelectedLocations(reorderedLocations);
+                                return;
+                              }
+                            }}
+                          >
+                            <MenuItem value=""> </MenuItem>
+                            {_.map(
+                              filterSelectedLocations(
+                                locations,
+                                selectedLocations,
+                                s
+                              ),
+                              (option) => {
+                                return (
+                                  <MenuItem value={option?.id}>
+                                    {option?.name}
+                                  </MenuItem>
+                                );
+                              }
+                            )}
+                          </Select>
+                        </FormControl>
+                      );
+                    }
+                  )}
+                  {locations.length !== selectedLocations.length && (
+                    <FormControl
+                      fullWidth
+                      sx={{ gridColumn: "span 2", marginY: "5px" }}
+                    >
+                      <Select
+                        onChange={(e) => {
+                          const location = _.find(
+                            locations,
+                            (l) => l.id == e.target.value
+                          );
+                          setSelectedLocations([
+                            {
+                              id: uuid(),
+                              order: selectedLocations.length + 1,
+                              location: location,
+                            },
+                            ...selectedLocations,
+                          ]);
+                        }}
+                      >
+                        <MenuItem value=""> </MenuItem>
+                        {_.map(
+                          filterLocations(locations, selectedLocations),
+                          (option) => {
+                            return (
+                              <MenuItem value={option?.id}>
+                                {option?.name}
+                              </MenuItem>
+                            );
+                          }
+                        )}
+                      </Select>
+                    </FormControl>
+                  )}
+                </Card>
               </Form>
             </Box>
           </>
@@ -218,6 +319,24 @@ const NewEntityPage = () => {
   );
 };
 
+const filterLocations = (locations: any, selectedLocations: any) => {
+  return _.filter(locations, (l) => {
+    return !_.find(selectedLocations, (sl) => _.isEqual(l, sl.location));
+  });
+};
+
+const filterSelectedLocations = (
+  locations: any,
+  selectedLocations: any,
+  currectLocation: any
+) => {
+  return _.filter(locations, (l) => {
+    return !_.find(
+      selectedLocations,
+      (sl) => _.isEqual(l, sl.location) && sl.id !== currectLocation.id
+    );
+  });
+};
 const FormField = ({
   type,
   field,
@@ -284,13 +403,6 @@ const FormField = ({
         </LocalizationProvider>
       );
     case "drop-down":
-      console.log("DROP DOWN: ");
-      console.log("DROP DOWN: ");
-      console.log(values);
-      console.log(field);
-      console.log(values[field.value]);
-      console.log("DROP DOWN: ");
-      console.log("DROP DOWN: ");
       return (
         <FormControl fullWidth sx={{ gridColumn: "span 2" }}>
           <InputLabel id="demo-simple-select-label">{field.label}</InputLabel>

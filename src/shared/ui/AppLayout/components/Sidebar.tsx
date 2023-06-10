@@ -4,23 +4,18 @@ import { Box, IconButton, Typography, useTheme } from "@mui/material";
 import { Link, useLocation } from "react-router-dom";
 import "react-pro-sidebar/dist/css/styles.css";
 import { tokens } from "../../../global/theme";
-import HomeOutlinedIcon from "@mui/icons-material/HomeOutlined";
 import PeopleOutlinedIcon from "@mui/icons-material/PeopleOutlined";
-import ContactsOutlinedIcon from "@mui/icons-material/ContactsOutlined";
+import PaymentOutlined from "@mui/icons-material/PaymentOutlined";
 import LocationCityOutlined from "@mui/icons-material/LocationCityOutlined";
-import PersonOutlinedIcon from "@mui/icons-material/PersonOutlined";
 import CalendarTodayOutlinedIcon from "@mui/icons-material/CalendarTodayOutlined";
 import SettingsOutlined from "@mui/icons-material/SettingsOutlined";
-import PersonOffOutlined from "@mui/icons-material/PersonOffOutlined";
 import LockOutlined from "@mui/icons-material/LockOutlined";
+import HouseOutlined from "@mui/icons-material/HouseOutlined";
 import BarChartOutlinedIcon from "@mui/icons-material/BarChartOutlined";
-import PieChartOutlineOutlinedIcon from "@mui/icons-material/PieChartOutlineOutlined";
-import TimelineOutlinedIcon from "@mui/icons-material/TimelineOutlined";
 import LabelOutlined from "@mui/icons-material/LabelOutlined";
 import MenuOutlinedIcon from "@mui/icons-material/MenuOutlined";
 import MapOutlinedIcon from "@mui/icons-material/MapOutlined";
 import _ from "lodash";
-import { entities } from "../../../../data/entities";
 import { useAppState } from "src/shared/global/appState";
 import useApi from "src/shared/agent";
 
@@ -36,64 +31,60 @@ type SidebarProps = {
   isSidebar: boolean;
 };
 
-const customMenuItems = [
-  {
-    title: "Workplaces",
-    link: "",
-  },
-  {
-    title: "Offices",
-    link: "",
-  },
-  {
-    title: "Tabels",
-    link: "",
-  },
-  {
-    title: "Tabels",
-    link: "",
-  },
-];
-
 const defaultMenuItems = [
   {
     title: "Maps",
     link: "maps",
+    permission: "default",
     icon: <MapOutlinedIcon />,
   },
   {
     title: "Calendar",
     link: "calendar",
+    permission: "view_calendar",
     icon: <CalendarTodayOutlinedIcon />,
   },
   {
     title: "Location",
     link: "locations",
+    permission: "view_location",
     icon: <LocationCityOutlined />,
   },
   {
     title: "Contact",
     link: "contacts",
+    permission: "view_contact",
     icon: <PeopleOutlinedIcon />,
   },
+  // {
+  //   title: "Payments",
+  //   link: "payments",
+  //   permission: "default",
+  //   icon: <PaymentOutlined />,
+  // },
 ];
 
 const superAdminMenuItems = [
   {
-    title: "Contact",
-    link: "contacts",
+    title: "Users",
+    link: "users",
     icon: <PeopleOutlinedIcon />,
   },
   {
-    title: "Account",
-    link: "account",
-    icon: <PersonOffOutlined />,
-  },
-  {
-    title: "Role",
-    link: "role",
+    title: "Roles",
+    link: "roles",
     icon: <LockOutlined />,
   },
+  {
+    title: "Organizations",
+    link: "organizations",
+    icon: <HouseOutlined />,
+  },
+  // {
+  //   title: "Statistics",
+  //   link: "statistics",
+  //   icon: <BarChartOutlinedIcon />,
+  // },
 ];
 
 const Item: React.FC<ItemProps> = ({
@@ -130,7 +121,7 @@ const MenuItems = ({
   const { get } = useApi();
 
   const [formTypes, setFormTypes] = useState<FormType[]>([]);
-  const { customFormTypes, setCustomFormTypes } = useAppState();
+  const { customFormTypes, setCustomFormTypes, currentUser } = useAppState();
 
   useEffect(() => {
     get("/form_types").then((res) => {
@@ -141,13 +132,24 @@ const MenuItems = ({
   return (
     <Box paddingLeft={isCollapsed ? undefined : "10%"}>
       {_.map(
-        !!isSuperAdmin ? superAdminMenuItems : defaultMenuItems,
+        !!isSuperAdmin
+          ? superAdminMenuItems
+          : _.filter(
+              defaultMenuItems,
+              (v) =>
+                !!_.find(currentUser?.permissions?.[0]?.permissions, (a) => {
+                  return (
+                    a?.permission_name == v?.permission ||
+                    v?.permission === "default"
+                  );
+                })
+            ) ?? [],
         (menuItem, index) => (
           <Item
             key={index}
-            title={menuItem.title}
-            to={menuItem.link}
-            icon={menuItem.icon}
+            title={menuItem?.title}
+            to={menuItem?.link}
+            icon={menuItem?.icon}
             selected={selected}
             setSelected={setSelected}
           />
@@ -156,23 +158,31 @@ const MenuItems = ({
 
       {!isSuperAdmin && (
         <>
-          <Typography
-            variant="h6"
-            color={colors.grey[300]}
-            sx={{ m: "15px 0 5px 20px" }}
-          >
-            Custom Entities
-          </Typography>
-          {_.map(customFormTypes, (menuItem, index) => (
-            <Item
-              key={index}
-              title={menuItem.label}
-              to={`/entity/${menuItem.id}`}
-              icon={<LabelOutlined />}
-              selected={selected}
-              setSelected={setSelected}
-            />
-          ))}
+          {!!_.find(
+            currentUser?.permissions?.[0]?.permissions,
+            (v) => v?.permission_name === "view_entity"
+          ) && (
+            <>
+              <Typography
+                variant="h6"
+                color={colors.grey[300]}
+                sx={{ m: "15px 0 5px 20px" }}
+              >
+                Custom Entities
+              </Typography>
+              {_.map(customFormTypes, (menuItem, index) => (
+                <Item
+                  key={index}
+                  title={menuItem.label}
+                  to={`/entity/${menuItem.id}`}
+                  icon={<LabelOutlined />}
+                  selected={selected}
+                  setSelected={setSelected}
+                />
+              ))}
+            </>
+          )}
+
           <Typography
             variant="h6"
             color={colors.grey[300]}
@@ -189,94 +199,6 @@ const MenuItems = ({
           />
         </>
       )}
-      {/* <Item
-    title="Dashboard"
-    to=""
-    icon={<HomeOutlinedIcon />}
-    selected={selected}
-    setSelected={setSelected}
-  />
-
-  <Typography
-    variant="h6"
-    color={colors.grey[300]}
-    sx={{ m: "15px 0 5px 20px" }}
-  >
-    Data
-  </Typography>
-  <Item
-    title="Manage Team"
-    to="team"
-    icon={<PeopleOutlinedIcon />}
-    selected={selected}
-    setSelected={setSelected}
-  />
-  <Item
-    title="Contacts Information"
-    to="contacts"
-    icon={<ContactsOutlinedIcon />}
-    selected={selected}
-    setSelected={setSelected}
-  />
-  <Item
-    title="Invoices Balances"
-    to="invoices"
-    icon={<ReceiptOutlinedIcon />}
-    selected={selected}
-    setSelected={setSelected}
-  />
-
-  <Typography
-    variant="h6"
-    color={colors.grey[300]}
-    sx={{ m: "15px 0 5px 20px" }}
-  >
-    Pages
-  </Typography>
-  <Item
-    title="Profile Form"
-    to="form"
-    icon={<PersonOutlinedIcon />}
-    selected={selected}
-    setSelected={setSelected}
-  />
- */}
-      {/* <Item
-    title="FAQ Page"
-    to="faq"
-    icon={<HelpOutlineOutlinedIcon />}
-    selected={selected}
-    setSelected={setSelected}
-  />
-
-  <Typography
-    variant="h6"
-    color={colors.grey[300]}
-    sx={{ m: "15px 0 5px 20px" }}
-  >
-    Charts
-  </Typography>
-  <Item
-    title="Bar Chart"
-    to="bar"
-    icon={<BarChartOutlinedIcon />}
-    selected={selected}
-    setSelected={setSelected}
-  />
-  <Item
-    title="Pie Chart"
-    to="pie"
-    icon={<PieChartOutlineOutlinedIcon />}
-    selected={selected}
-    setSelected={setSelected}
-  />
-  <Item
-    title="Line Chart"
-    to="line"
-    icon={<TimelineOutlinedIcon />}
-    selected={selected}
-    setSelected={setSelected}
-  /> */}
     </Box>
   );
 };
@@ -287,6 +209,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isSidebar }) => {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [selected, setSelected] = useState("Dashboard");
   const { pathname } = useLocation();
+  const { currentUser } = useAppState();
 
   return (
     <Box
@@ -326,9 +249,6 @@ const Sidebar: React.FC<SidebarProps> = ({ isSidebar }) => {
                 alignItems="center"
                 ml="15px"
               >
-                <Typography variant="h3" color={colors.grey[100]}>
-                  ADMINIS
-                </Typography>
                 <IconButton onClick={() => setIsCollapsed(!isCollapsed)}>
                   <MenuOutlinedIcon />
                 </IconButton>
@@ -350,10 +270,10 @@ const Sidebar: React.FC<SidebarProps> = ({ isSidebar }) => {
                   fontWeight="bold"
                   sx={{ m: "4px 0 0 0" }}
                 >
-                  Roman Alberda
+                  {currentUser?.user?.full_name}
                 </Typography>
                 <Typography variant="h5" color={colors.greenAccent[500]}>
-                  Manager
+                  {currentUser?.permissions?.[0]?.role_name}
                 </Typography>
               </Box>
             </Box>

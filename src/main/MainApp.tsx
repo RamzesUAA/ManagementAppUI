@@ -8,6 +8,7 @@ import { PageRoutes as ContactRoutes } from "./contacts";
 import { PageRoutes as LocationRoutes } from "./locations";
 import { PageRoutes as FormTypeRoutes } from "./entity-types";
 import { PageRoutes as EntityRoutes } from "./entities";
+import { PageRoutes as PaymentRoutes } from "./payments";
 import { MapPage } from "./map";
 
 const MainApp = () => {
@@ -22,6 +23,7 @@ const MainApp = () => {
           <Route path="entity/*" element={<EntityRoutes />} />
           <Route path="form-types/*" element={<FormTypeRoutes />} />
           <Route path="calendar/*" element={<CalendarPage />} />
+          <Route path="payments/*" element={<PaymentRoutes />} />
 
           {/*               
               <Route path="" element={<DashboardPage />} />

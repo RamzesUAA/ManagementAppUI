@@ -7,7 +7,6 @@ const useApi = () => {
   const [token, setLocalToken] = useState<string>("");
 
   const [client] = useState(() => {
-    console.log("#############");
     const client = axios.create({
       baseURL: process.env.REACT_APP_MANAGEMENT_URL,
       headers: {
@@ -28,7 +27,6 @@ const useApi = () => {
       },
       (error) => {
         if (error.response && error.response.status === 401) {
-          console.log("Unauthorized");
           navigate("/login");
         }
         return Promise.reject(error);
@@ -42,6 +40,11 @@ const useApi = () => {
 
   const setToken = (token: string) => {
     axios.defaults.headers["Authorization"] = `Bearer ${token}`;
+  };
+
+  const logout = async () => {
+    const response = await client.get("/accounts/sign_out");
+    return response;
   };
 
   const get = async <T = any>(
@@ -69,7 +72,16 @@ const useApi = () => {
     return response;
   };
 
-  return { get, post, del, setToken };
+  const put = async <T = any>(
+    url: string,
+    data?: any,
+    config?: AxiosRequestConfig
+  ): Promise<AxiosResponse<T>> => {
+    const response = await client.put<T>(url, data, config);
+    return response;
+  };
+
+  return { get, post, put, del, setToken, logout };
 };
 
 export default useApi;

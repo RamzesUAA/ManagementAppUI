@@ -65,7 +65,7 @@ const LocationsPage = () => {
       </Box>
       <Box
         m="40px 0 0 0"
-        height="75vh"
+        height="70vh"
         sx={{
           "& .MuiDataGrid-root": {
             border: "none",

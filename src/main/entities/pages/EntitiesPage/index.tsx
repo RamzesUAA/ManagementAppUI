@@ -35,7 +35,6 @@ const EntitiesPage = () => {
 
   useEffect(() => {
     get(`/forms?form_type_id=${entityId}`).then((r) => {
-      console.log(r?.data?.data);
       setForms(r?.data?.data || []);
     });
   }, [entityId]);

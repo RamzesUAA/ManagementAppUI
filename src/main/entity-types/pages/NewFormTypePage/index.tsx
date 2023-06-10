@@ -27,6 +27,7 @@ import { tokens } from "src/shared/global/theme";
 import useApi from "src/shared/agent";
 import { useAppState } from "src/shared/global/appState";
 import { useNavigate } from "react-router-dom";
+import { VariantType, useSnackbar } from "notistack";
 
 const availableFormType = [
   "input",
@@ -71,24 +72,11 @@ const NewFormTypePage = () => {
   const handleOpen = () => setOpen(true);
   const handleClose = () => setOpen(false);
   // navigate to form-types page
+  const { enqueueSnackbar } = useSnackbar();
 
   let navigate = useNavigate();
 
   const handleFormSubmit = (values: any) => {
-    console.log("SUBMITTT");
-    console.log(values);
-    console.log("SUBMITTT");
-
-    // const dropdownFields = _.filter(values.fields, { type: "drop-down" });
-    // _.forEach(dropdownFields, (field) => {
-    //   const options = parseOptionsString(field.options);
-    //   field.options = options;
-    // });
-
-    // console.log("SUBMITTT");
-    // console.log(values);
-    // console.log("SUBMITTT");
-
     const formType = {
       label: values.formTypeLabel,
       fields: { schema: values.fields },
@@ -97,6 +85,12 @@ const NewFormTypePage = () => {
 
     post("/form_types", { form_type: formType }).then((res) => {
       setCustomFormTypes((prev: any) => [...prev, res.data.data]);
+
+      enqueueSnackbar(`${formType?.name} is successfully created.`, {
+        variant: "success",
+        anchorOrigin: { horizontal: "right", vertical: "top" },
+      });
+
       navigate("/form-types");
       // navigate to form-types page
     });
@@ -128,7 +122,7 @@ const NewFormTypePage = () => {
 
   return (
     <Box m="20px">
-      <Header title="New Entity Type" subtitle="Create New Location Page" />
+      <Header title="New Entity Type" subtitle="Create New Form Type Page" />
 
       <Formik onSubmit={handleFormSubmit} initialValues={initialValues}>
         {({ handleSubmit, setFieldValue, ...props }) => (
@@ -372,10 +366,6 @@ const BasicModal = ({ handleClose, open, addField }: any) => {
   };
 
   const handleFormSubmit = (values: any) => {
-    console.log("#############");
-    console.log("#############");
-    console.log(values);
-    console.log("#############");
     addField({
       ...values,
       // make sure name is lowercase and replace spaces with underscore

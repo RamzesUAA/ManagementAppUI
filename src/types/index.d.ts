@@ -6,6 +6,7 @@ declare type LocationType = {
   organization_id: string;
   location?: any;
   type: string;
+  forms?: any;
   address: string;
 };
 

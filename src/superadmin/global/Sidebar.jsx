@@ -79,9 +79,6 @@ const Sidebar = () => {
                 alignItems="center"
                 ml="15px"
               >
-                <Typography variant="h3" color={colors.grey[100]}>
-                  ADMINIS
-                </Typography>
                 <IconButton onClick={() => setIsCollapsed(!isCollapsed)}>
                   <MenuOutlinedIcon />
                 </IconButton>
@@ -110,7 +107,7 @@ const Sidebar = () => {
                   Roman Alberda
                 </Typography>
                 <Typography variant="h5" color={colors.greenAccent[500]}>
-                  Manager
+                  {/* {currentUser?.permissions?.[0]?.role_name} */}
                 </Typography>
               </Box>
             </Box>

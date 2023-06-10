@@ -22,7 +22,6 @@ const MapPage = () => {
         })
         .flatten()
         .value();
-      console.log(features);
 
       setLocation({ type: "FeatureCollection", features: features });
     });

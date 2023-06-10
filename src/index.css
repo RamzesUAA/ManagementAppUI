@@ -87,3 +87,44 @@ body,
 .circle:first-child {
   margin-left: 10px;
 }
+
+.fa-square:before {
+  content: "\f0c8";
+}
+
+.fa-square-full:before {
+  content: "\f45c";
+}
+
+.fa-square-root:before {
+  content: "\f697";
+}
+
+.fa-square-root-alt:before {
+  content: "\f698";
+}
+
+.fa-squarespace:before {
+  content: "\f5be";
+}
+
+.fad.fa-square:after {
+  content: "\10f0c8";
+}
+
+.fad.fa-square-full:after {
+  content: "\10f45c";
+}
+
+.fad.fa-square-root:after {
+  content: "\10f697";
+}
+
+.fad.fa-square-root-alt:after {
+  content: "\10f698";
+}
+
+.mr-2,
+.mx-2 {
+  margin-right: 0.5rem !important;
+}

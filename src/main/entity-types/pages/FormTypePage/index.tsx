@@ -23,6 +23,7 @@ import {
 import FormFieldByType from "../../components/FormFieldByType";
 import { tokens } from "src/shared/global/theme";
 import { useAppState } from "src/shared/global/appState";
+import { VariantType, useSnackbar } from "notistack";
 
 const FormTypePage = () => {
   const theme = useTheme();
@@ -35,6 +36,7 @@ const FormTypePage = () => {
   const { setCustomFormTypes } = useAppState();
 
   const [formType, setFormType] = useState<FormType | null>(null);
+  const { enqueueSnackbar } = useSnackbar();
 
   useEffect(() => {
     get(`/form_types/${formTypeId}`)
@@ -51,9 +53,15 @@ const FormTypePage = () => {
       setCustomFormTypes((prev) => {
         return _.filter(prev, (f) => f.id !== formTypeId);
       });
+
+      enqueueSnackbar(`${formType?.label} is deleted.`, {
+        variant: "info",
+        anchorOrigin: { horizontal: "right", vertical: "top" },
+      });
+
       navigate("/form-types");
     });
-  }, [formTypeId]);
+  }, [formTypeId, formType]);
 
   return (
     <Box m="20px">

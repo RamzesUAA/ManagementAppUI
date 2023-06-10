@@ -116,8 +116,6 @@ const CalendarPage = () => {
     });
   };
 
-  if (!events.length) return null;
-
   return (
     <Box m="20px">
       <Header title="Calendar" subtitle="Full Calendar Interactive Page" />

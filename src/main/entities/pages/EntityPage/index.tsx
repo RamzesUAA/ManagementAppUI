@@ -22,6 +22,8 @@ import {
 } from "@mui/material";
 import { tokens } from "src/shared/global/theme";
 import { useAppState } from "src/shared/global/appState";
+import { VariantType, useSnackbar } from "notistack";
+import moment from "moment";
 
 const EntityPage = () => {
   const theme = useTheme();
@@ -32,6 +34,7 @@ const EntityPage = () => {
   const navigate = useNavigate();
 
   const [form, setForm] = useState<EntityWithType | null>(null);
+  const { enqueueSnackbar } = useSnackbar();
 
   useEffect(() => {
     get(`/forms/${formId}`)
@@ -46,9 +49,6 @@ const EntityPage = () => {
               );
 
               setForm(combinedRecords);
-              console.log("%%%%%%%%%%%%");
-              console.log(combinedRecords);
-              console.log("%%%%%%%%%%%%");
               // Handle the response of the second API call
             })
             .catch((e: any) => {
@@ -64,6 +64,12 @@ const EntityPage = () => {
   const handleDelete = useCallback(() => {
     del(`/forms/${formId}`).then((res: any) => {
       console.log(res);
+
+      enqueueSnackbar(`${form?.name} is deleted.`, {
+        variant: "info",
+        anchorOrigin: { horizontal: "right", vertical: "top" },
+      });
+
       navigate(`/entity/${form?.form_type_id}`);
     });
   }, [formId, form]);
@@ -80,7 +86,7 @@ const EntityPage = () => {
       <Header title="ENTITY" subtitle="Entity Page" />
       <Box>
         <Typography variant="h3" component="h2" marginBottom="15px">
-          {form?.label}
+          {form?.name}
         </Typography>
         <Box
           marginBottom="10px"
@@ -128,7 +134,7 @@ const EntityPage = () => {
                       textOverflow: "ellipsis",
                     }}
                   >
-                    {f?.value}
+                    {getValue(f)}
                   </span>
                 </Typography>
               );
@@ -138,6 +144,12 @@ const EntityPage = () => {
       </Box>
     </Box>
   );
+};
+
+const getValue = ({ value, type }: any) => {
+  if (type === "date") return moment(value).format("MMM D YYYY");
+
+  return value;
 };
 
 function combineSchemaWithRecords(jsonA: any, jsonB: any) {
